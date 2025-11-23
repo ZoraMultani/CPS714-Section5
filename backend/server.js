@@ -163,6 +163,6 @@ app.get('/api/health', (_, res) => res.json({ ok: true }));
 if (process.env.NODE_ENV !== 'test') {
   const PORT = process.env.PORT || 4000;
   app.listen(PORT, () =>
-    console.log(`✅ LibraLite API listening on http://localhost:${PORT}`)
+    console.log(`LibraLite API listening on http://localhost:${PORT}`)
   );
 }

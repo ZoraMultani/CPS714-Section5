@@ -44,29 +44,59 @@ export default function App() {
   const [loanType, setLoanType] = useState('book'); // 'book' or 'ebook'
   const [loanDueDate, setLoanDueDate] = useState(dayjs().add(14, 'day').format('YYYY-MM-DD') );
 
-  const fetchAll = async () => {
-    try {
-      setLoading(true);
-      setLoadError(null);
+const fetchAll = async () => {
+  try {
+    setLoading(true);
+    setLoadError(null);
 
-      const [meR, loansR, resR, finesR] = await Promise.all([
-        getUser(),
-        getLoans(),
-        getReservations(),
-        getFines(),
-      ]);
+    const results = await Promise.allSettled([
+      getUser(),
+      getLoans(),
+      getReservations(),
+      getFines(),
+    ]);
 
-      setMe(meR);
-      setLoans(loansR);
-      setReservations(resR);
-      setFines(finesR);
-    } catch (err) {
-      setLoadError(err.message || 'Failed to contact server');
-      setSnack({ severity: 'error', msg: err.message || 'Failed to contact server' });
-    } finally {
-      setLoading(false);
+    const [meR, loansR, resR, finesR] = results;
+
+    // Handle each case independently
+
+    if (meR.status === 'fulfilled') {
+      setMe(meR.value);
+    } else {
+      console.error("Failed to load user:", meR.reason);
+      setSnack({ severity: 'error', msg: 'Failed to load user. If this error persists, please contact support@libralite.ca.' });
     }
-  };
+
+    if (loansR.status === 'fulfilled') {
+      setLoans(loansR.value);
+    } else {
+      console.error("Failed to load loans:", loansR.reason);
+      setSnack({ severity: 'error', msg: 'Failed to load loans. If this error persists, please contact support@libralite.ca.' });
+    }
+
+    if (resR.status === 'fulfilled') {
+      setReservations(resR.value);
+    } else {
+      console.error("Failed to load reservations:", resR.reason);
+      setSnack({ severity: 'error', msg: 'Failed to load reservations. If this error persists, please contact support@libralite.ca.' });
+    }
+
+    if (finesR.status === 'fulfilled') {
+      setFines(finesR.value);
+    } else {
+      console.error("Failed to load fines:", finesR.reason);
+      setSnack({ severity: 'error', msg: 'Failed to load fines. If this error persists, please contact support@libralite.ca.' });
+    }
+
+  } catch (err) {
+    // This only catches unexpected internal errors
+    setLoadError(err.message || 'Unexpected error');
+    setSnack({ severity: 'error', msg: err.message || 'Unexpected error. If this error persists, please contact support@libralite.ca.' });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => { fetchAll(); }, []);
 
