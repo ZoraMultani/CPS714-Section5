@@ -11,3 +11,15 @@ export async function renewLoan(id) {
   if (!res.ok) throw new Error(data.error || 'Renewal failed');
   return data;
 }
+
+export async function createLoan(payload) {
+  const res = await fetch(`${API_BASE}/loans`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to create loan');
+  return data;
+}
+

@@ -6,16 +6,16 @@ import dayjs from 'dayjs';
 import { customAlphabet } from 'nanoid';
 
 const nanoid = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 8);
-const app = express();
+export const app = express();
 app.use(cors());
 app.use(express.json());
 
 // ===== Mock Data =====
 const member = {
   id: 'm001',
-  name: 'Andrew Le',
-  email: 'andrew@example.com',
-  finesTotal: 6.50,
+  name: 'Tom Jerry',
+  email: 'username@example.com',
+  finesTotal: 76.50,
 };
 
 // Loan items include both physical and digital items
@@ -83,6 +83,37 @@ app.get('/api/loans', (req, res) => {
   res.json(enriched);
 });
 
+app.post('/api/loans', (req, res) => {
+  const { title, author, type, isDigital, dueDate, expiresAt } = req.body || {};
+  if (!title) return res.status(400).json({ error: 'title required' });
+
+  const digital = isDigital || (type && type.toLowerCase() === 'ebook');
+
+  const loan = {
+    id: nanoid(),
+    title,
+    author: author || 'Unknown',
+    type: digital ? 'eBook' : 'Book',
+    isDigital: digital,
+    renewable: !digital,     // physical: true, digital: false
+    holdsCount: 0,           // no holds by default
+  };
+
+  if (digital) {
+    loan.expiresAt = expiresAt
+      ? dayjs(expiresAt).toISOString()
+      : extendDueDate(dayjs(), 14);
+  } else {
+    loan.dueDate = dueDate
+      ? dayjs(dueDate).toISOString()
+      : extendDueDate(dayjs(), 14);
+  }
+
+  loans.push(loan);
+  res.json(loan);
+});
+
+
 app.post('/api/loans/:id/renew', (req, res) => {
   const loan = loans.find((l) => l.id === req.params.id);
   if (!loan) return res.status(404).json({ error: 'Loan not found' });
@@ -129,5 +160,9 @@ app.post('/api/pay', (req, res) => {
 // Health
 app.get('/api/health', (_, res) => res.json({ ok: true }));
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`✅ LibraLite API listening on http://localhost:${PORT}`));
+if (process.env.NODE_ENV !== 'test') {
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () =>
+    console.log(`✅ LibraLite API listening on http://localhost:${PORT}`)
+  );
+}
